@@ -1,7 +1,7 @@
 export default function Layout({ children }) {
   return (
-    <>
-      <main>{children}</main>
-    </>
+    <main>
+      <div className="max-w-4xl mx-auto">{children}</div>
+    </main>
   );
 }

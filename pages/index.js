@@ -1,10 +1,10 @@
-import Head from "next/head";
-import Image from "next/image";
-import { Inter } from "next/font/google";
-import styles from "@/styles/Home.module.css";
-
-const inter = Inter({ subsets: ["latin"] });
+import SearchInput from "@/components/SearchInput";
 
 export default function Home() {
-  return <h1>Hello world!</h1>;
+  return (
+    <>
+      <h1 className="text-xl my-4">Story beats</h1>
+      <SearchInput />
+    </>
+  );
 }
