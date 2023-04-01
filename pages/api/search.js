@@ -1,8 +1,9 @@
 import { supabase } from "@/lib/supabaseClient";
+import { findExistingBook, updateBook, createBook } from "@/lib/db";
 
 async function fetchBeats(book) {
   console.log("fetchbeats");
-  const prompt = `What are the story beats in the book ${book.title}? (If you aren't sure what book this is, don't make up a response, and instead just say "No.") List them as a set of bullet points that avoid assuming knowledge of subsequent story beats. For each bullet point, indicate how that beat contributes to the overall plot and character development. Format your response as markdown, with each story beat as a bullet point, with sub-bullets for each how the story beat contributes to the plot and how the story beat contributes to character development.
+  const prompt = `What are the story beats in the book ${book.title}? (If you aren't sure what book this is, don't make up a response, and instead just say "No.") List them as a set of bullet points that avoid assuming knowledge of subsequent story beats. For each bullet point, indicate how that beat contributes to the overall plot and character development. Format your response as markdown, with each story beat as a bullet point, with sub-bullets for each how the story beat contributes to the plot and how the story beat contributes to character development. Don't use bold or italic formatting.
   You are aware that your target audience is writers who want to understand how stories are structured and why.`;
 
   const url = "https://api.openai.com/v1/chat/completions";
@@ -45,69 +46,6 @@ async function searchForBooks(query) {
 
   const firstResult = books.docs[0];
   return firstResult;
-}
-
-async function findExistingBook(key) {
-  console.log("findexistingbook");
-  const { data, error } = await supabase
-    .from("stories")
-    .select()
-    .eq("openlibrary_key", key);
-
-  if (error) {
-    console.log(`error: ${error}`);
-    throw new Error("findexistingbook");
-  }
-
-  if (data.length === 0) {
-    console.log("doesn't exist");
-    return false;
-  }
-
-  const book = data[0];
-
-  return book;
-}
-
-async function updateBook(id, beats) {
-  console.log("updatebook");
-  const { data, error } = await supabase
-    .from("stories")
-    .update({
-      beats: beats,
-    })
-    .eq("id", id)
-    .select();
-
-  if (error) {
-    return false;
-  }
-
-  return data;
-}
-
-async function createBook(book, beats) {
-  console.log("createbook");
-  if (!book) {
-    throw new Error("Missing book");
-  }
-
-  const { data, error } = await supabase
-    .from("stories")
-    .insert({
-      title: book.title,
-      author: book.author,
-      openlibrary_key: book.key,
-      beats: beats,
-    })
-    .select();
-
-  if (error) {
-    throw new Error(error);
-  }
-
-  console.log(data);
-  return data;
 }
 
 async function fetchBookData(key) {
