@@ -27,7 +27,7 @@ function Story({ data }) {
   return (
     <>
       <h2>{story.title}</h2>
-      {story.beats ? (
+      {story.beats ? ( // eslint-disable-next-line
         <ReactMarkdown children={story.beats.choices[0].message.content} />
       ) : (
         <p>Fetching beats...</p>
