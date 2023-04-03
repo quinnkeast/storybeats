@@ -6,8 +6,8 @@ import { fetchBook, createBook, updateBook } from "@/lib/db";
 import { fetchBeats } from "@/lib/chatgpt";
 import { fetchBookData } from "@/lib/openlibrary";
 
-function Story(props) {
-  const [story, setStory] = useState(props.story);
+function Story({ data }) {
+  const [story, setStory] = useState(data);
   const [fetchingBeats, setFetchingBeats] = useState(false);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export async function getServerSideProps(context) {
 
   return {
     props: {
-      story: story,
+      data: story,
     },
   };
 }

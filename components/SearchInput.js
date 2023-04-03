@@ -102,6 +102,7 @@ export default function SearchInput() {
             <div {...getMenuProps()}>
               {searchResults.map((item, index) => (
                 <div
+                  key={item.key}
                   {...getItemProps({
                     key: item.key,
                     index,
