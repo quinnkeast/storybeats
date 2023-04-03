@@ -15,6 +15,7 @@ function Story(props) {
       setFetchingBeats(true);
       fetchBeatsAndUpdateBook(story);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchBeatsAndUpdateBook = async () => {
