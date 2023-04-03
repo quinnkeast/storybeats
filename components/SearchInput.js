@@ -1,96 +1,95 @@
-import { useState } from "react";
-import { remark } from "remark";
-import html from "remark-html";
+import React, { useState, useEffect } from "react";
+import { render } from "react-dom";
+import { useRouter } from "next/router";
+import Downshift from "downshift";
+import classNames from "classnames";
+
+function debounce(fn, time) {
+  let timeoutId;
+  return wrapper;
+  function wrapper(...args) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+      fn(...args);
+    }, time);
+  }
+}
 
 export default function SearchInput() {
-  const [search, setSearch] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [story, setStory] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
 
-  const updateSearch = (e) => {
-    setSearch(e.target.value);
-  };
+  useEffect(() => {
+    debounce(searchTerm, 500);
+  }, [searchTerm]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    const query = {
-      search: search,
-    };
-
-    const JSONdata = JSON.stringify(query);
-
-    const endpoint = "/api/search";
-
-    const options = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSONdata,
-    };
-
-    const response = await fetch(endpoint, options);
-    const data = await response.json();
-    if (data) {
-      let beats;
-      if (Array.isArray(data)) {
-        beats = JSON.parse(data[0].beats);
-      } else {
-        beats = JSON.parse(data.beats);
-      }
-      const processedMarkdown = await remark()
-        .use(html)
-        .process(beats.choices[0].message.content);
-      const contentHtml = processedMarkdown.toString();
-
-      setStory({
-        title: data.title,
-        author: data.author,
-        beats: contentHtml,
-      });
-
-      setSubmitting(false);
-      setSubmitted(true);
-    } else {
-      setSubmitting(false);
-      setSubmitted(false);
+  const handleSearch = async (searchTerm) => {
+    console.log("trigger");
+    try {
+      const query = {
+        search: inputValue,
+      };
+      const JSONdata = JSON.stringify(query);
+      const endpoint = "/api/search";
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSONdata,
+      };
+      const response = await fetch(endpoint, options);
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error(error);
     }
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="">
-        <label htmlFor="search" className="block font-semibold mb-2">
-          Find a story
-        </label>
-        <div className="flex flex-row">
+    <Downshift
+      onChange={(selection) => console.log("selected:", selection)}
+      itemToString={(item) => (item ? item.label : "")}
+    >
+      {({
+        getInputProps,
+        getMenuProps,
+        getItemProps,
+        isOpen,
+        highlightedIndex,
+      }) => (
+        <div>
           <input
-            type="text"
-            value={search}
-            onChange={updateSearch}
-            id="search"
-            placeholder="Enter a story title..."
-            className="border border-grey-500 px-3 py-2 rounded block flex-grow mr-2"
-            required
+            {...getInputProps({
+              placeholder: "Search",
+              onChange: (event) => setSearchTerm(event.target.value),
+            })}
           />
-          <button
-            type="submit"
-            className="rounded bg-indigo-800 text-white px-4 py-2 font-semibold inline-block disabled:bg-indigo-300"
-            disabled={submitting}
-          >
-            Go
-          </button>
+          {isOpen && (
+            <div {...getMenuProps()}>
+              {searchResults.map((item, index) => (
+                <div
+                  {...getItemProps({
+                    key: item.id,
+                    index,
+                    item,
+                    style: {
+                      backgroundColor:
+                        highlightedIndex === index ? "lightgray" : "white",
+                      fontWeight: "bold",
+                    },
+                  })}
+                >
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </form>
-      {!submitting && submitted && (
-        <>
-          <h2>{story.title}</h2>
-          <div dangerouslySetInnerHTML={{ __html: story.beats }} />
-        </>
       )}
-    </div>
+    </Downshift>
   );
 }
