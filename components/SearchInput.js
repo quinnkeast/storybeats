@@ -2,35 +2,61 @@ import React, { useState, useEffect } from "react";
 import { render } from "react-dom";
 import { useRouter } from "next/router";
 import Downshift from "downshift";
+import Link from "next/link";
 import classNames from "classnames";
 
-function debounce(fn, time) {
-  let timeoutId;
-  return wrapper;
-  function wrapper(...args) {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      timeoutId = null;
-      fn(...args);
-    }, time);
-  }
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value]);
+
+  return debouncedValue;
+}
+
+function parsedKey(string) {
+  if (!string) return false;
+  const parts = string.split("/");
+  const result = parts[2];
+  return result;
 }
 
 export default function SearchInput() {
+  const router = useRouter();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   useEffect(() => {
-    debounce(searchTerm, 500);
-  }, [searchTerm]);
+    if (debouncedSearchTerm) {
+      setIsSearching(true);
+      handleSearch(debouncedSearchTerm)
+        .then((results) => {
+          setIsSearching(false);
+          setSearchResults(results.docs);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    } else {
+      setSearchResults([]);
+    }
+  }, [debouncedSearchTerm]);
 
   const handleSearch = async (searchTerm) => {
-    console.log("trigger");
     try {
       const query = {
-        search: inputValue,
+        search: searchTerm,
       };
       const JSONdata = JSON.stringify(query);
       const endpoint = "/api/search";
@@ -43,7 +69,8 @@ export default function SearchInput() {
       };
       const response = await fetch(endpoint, options);
       const data = await response.json();
-      setSearchResults(data);
+      return data;
+      //setSearchResults(data);
     } catch (error) {
       console.error(error);
     }
@@ -51,8 +78,10 @@ export default function SearchInput() {
 
   return (
     <Downshift
-      onChange={(selection) => console.log("selected:", selection)}
-      itemToString={(item) => (item ? item.label : "")}
+      onChange={(selection) =>
+        router.push(`/story/${parsedKey(selection.key)}`)
+      }
+      itemToString={(item) => (item ? item.title : "")}
     >
       {({
         getInputProps,
@@ -73,7 +102,7 @@ export default function SearchInput() {
               {searchResults.map((item, index) => (
                 <div
                   {...getItemProps({
-                    key: item.id,
+                    key: item.key,
                     index,
                     item,
                     style: {
@@ -83,7 +112,9 @@ export default function SearchInput() {
                     },
                   })}
                 >
-                  {item.label}
+                  <Link href={`/story/${parsedKey(item.key)}`}>
+                    {item.title}
+                  </Link>
                 </div>
               ))}
             </div>

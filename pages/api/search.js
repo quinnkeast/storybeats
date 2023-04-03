@@ -9,8 +9,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const topResult = await searchForBooks(query);
-    return res.status(200).json(topResult);
+    const results = await searchForBooks(query);
+    return res.status(200).json(results);
   } catch (error) {
     console.error(error);
     return res.status(400).json(error);
