@@ -26,7 +26,6 @@ export default function SearchInput(redirect) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -79,12 +78,11 @@ export default function SearchInput(redirect) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setSubmitting(true);
     router.push(parsedKeyRoute(selectedValue.key));
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-row gap-2" disabled={submitting}>
+    <form onSubmit={handleSubmit} className="flex w-full flex-row gap-2">
       <Downshift
         onChange={item => setSelectedValue(item)}
         itemToString={item => (item ? item.title : '')}
@@ -139,7 +137,7 @@ export default function SearchInput(redirect) {
           </div>
         )}
       </Downshift>
-      <button type="submit" className="bg-indigo-600 text-white serif rounded px-3 py-1 disabled:bg-indigo-300" disabled={submitting}>
+      <button type="submit" className="bg-indigo-600 text-white serif rounded px-3 py-1 disabled:bg-indigo-300">
         Submit
       </button>
     </form>
