@@ -1,5 +1,5 @@
 async function fetchBeats(story) {
-  const prompt = `What are the story beats in the book ${story}? (If you aren't sure what book this is, don't make up a response, and instead just say "No.") List them as a set of bullet points that avoid assuming knowledge of subsequent story beats. For each bullet point, indicate how that beat contributes to the overall plot and character development. Format your response as markdown, with each story beat as a bullet point, with sub-bullets for each how the story beat contributes to the plot and how the story beat contributes to character development. Don't use bold or italic formatting.
+  const prompt = `What are the story beats in the book "${story}?" (If you aren't sure what book this is, don't make up a response, and instead just say "No.") List them as a set of bullet points that avoid assuming knowledge of subsequent story beats. For each bullet point, indicate how that beat contributes to the overall plot and character development. Format your response as markdown, with each story beat as a bullet point, with sub-bullets for each how the story beat contributes to the plot and how the story beat contributes to character development. Don't use bold or italic formatting.
   You are aware that your target audience is writers who want to understand how stories are structured and why.`;
 
   const url = "https://api.openai.com/v1/chat/completions";
@@ -21,6 +21,8 @@ async function fetchBeats(story) {
 
   const data = await response.json();
 
+  console.log(data);
+  
   if (!data) return false;
 
   return data;

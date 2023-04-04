@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { render } from "react-dom";
-import { useRouter } from "next/router";
 import Downshift from "downshift";
-import Link from "next/link";
-import classNames from "classnames";
+import { useRouter } from "next/router";
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -22,29 +19,26 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-function parsedKey(string) {
-  if (!string) return false;
-  const parts = string.split("/");
-  const result = parts[2];
-  return result;
-}
-
-export default function SearchInput() {
+export default function SearchInput(redirect) {
   const router = useRouter();
 
+  const [selectedValue, setSelectedValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-
+  const [searching, setSearching] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   useEffect(() => {
     if (debouncedSearchTerm) {
-      setIsSearching(true);
+      setSearching(true);
       handleSearch(debouncedSearchTerm)
         .then((results) => {
-          setIsSearching(false);
-          setSearchResults(results.docs);
+          setSearching(false);
+          // setSearchResults(results.docs) but only the top 10 results
+          // limit to first 10 results in array
+          setSearchResults(results.docs.slice(0, 10));
         })
         .catch((error) => {
           console.error(error);
@@ -71,58 +65,83 @@ export default function SearchInput() {
       const response = await fetch(endpoint, options);
       const data = await response.json();
       return data;
-      //setSearchResults(data);
     } catch (error) {
       console.error(error);
     }
   };
 
+  function parsedKeyRoute(string) {
+    if (!string) return false;
+    const parts = string.split("/");
+    const result = `/story/${parts[2]}`;
+    return result;
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    router.push(parsedKeyRoute(selectedValue.key));
+  }
+
   return (
-    <Downshift
-      onChange={(selection) =>
-        router.push(`/story/${parsedKey(selection.key)}`)
-      }
-      itemToString={(item) => (item ? item.title : "")}
-    >
-      {({
-        getInputProps,
-        getMenuProps,
-        getItemProps,
-        isOpen,
-        highlightedIndex,
-      }) => (
-        <div>
-          <input
-            {...getInputProps({
-              placeholder: "Search",
-              onChange: (event) => setSearchTerm(event.target.value),
-            })}
-          />
-          {isOpen && (
-            <div {...getMenuProps()}>
-              {searchResults.map((item, index) => (
-                <div
-                  key={item.key}
-                  {...getItemProps({
-                    key: item.key,
-                    index,
-                    item,
-                    style: {
-                      backgroundColor:
-                        highlightedIndex === index ? "lightgray" : "white",
-                      fontWeight: "bold",
-                    },
-                  })}
-                >
-                  <Link href={`/story/${parsedKey(item.key)}`}>
-                    {item.title}
-                  </Link>
-                </div>
-              ))}
+    <form onSubmit={handleSubmit} className="flex w-full flex-row gap-2" disabled={submitting}>
+      <Downshift
+        onChange={item => setSelectedValue(item)}
+        itemToString={item => (item ? item.title : '')}
+        id="search"
+      >
+        {({
+          getInputProps,
+          getMenuProps,
+          getItemProps,
+          isOpen,
+          highlightedIndex,
+        }) => (
+          <div className="w-full">
+            <label htmlFor="search" className="sr-only">Search</label>
+            <div className="relative flex flex-row">
+              <input
+                {...getInputProps({
+                  placeholder: "Search for story...",
+                  onChange: (event) => setSearchTerm(event.target.value),
+                })}
+                type="text"
+                id="search"
+                className="grow bg-white-100 border-gray-300 border rounded py-1 pl-1 pr-10  focus:ring-2 focus:ring-indigo-200 placeholder-gray-500"
+              />
+              {searching && <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white absolute right-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>}
             </div>
-          )}
-        </div>
-      )}
-    </Downshift>
+            {isOpen && (
+              <ul {...getMenuProps()} className="absolute">
+                {searchResults.map((item, index) => (
+                  <li
+                    key={item.key}
+                    {...getItemProps({
+                      key: item.key,
+                      index,
+                      item,
+                      style: {
+                        backgroundColor:
+                          highlightedIndex === index ? "lightgray" : "white",
+                        fontWeight: selectedValue === item ? "bold" : "normal",
+                      },
+                    })}
+                  >
+                    {item.title && item.title}<br />
+                    {item.author_name && item.author_name.map(author => <span key={author}>{author}</span>)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </Downshift>
+      <button type="submit" className="bg-indigo-600 text-white serif rounded px-3 py-1 disabled:bg-indigo-300" disabled={submitting}>
+        Submit
+      </button>
+    </form>
   );
 }
